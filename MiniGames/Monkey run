@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Monkey Run</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    canvas {
+      background-color: #fff;
+      border: 2px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <script>
+   const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// Game settings
+const groundHeight = 50;
+const monkeySpeed = 5;
+const obstacleSpeed = 3;
+let score = 0;
+let gameOver = false;
+
+// Monkey object
+let monkey = {
+  x: 50,
+  y: canvas.height - groundHeight - 50,
+  width: 30,
+  height: 30,
+  isJumping: false,
+  jumpHeight: 20,
+  jumpVelocity: 0,
+};
+
+// Obstacle object
+let obstacles = [];
+
+// Generate obstacles
+function generateObstacles() {
+  if (obstacles.length === 0 || obstacles[obstacles.length - 1].x < canvas.width - 200) {
+    obstacles.push({
+      x: canvas.width,
+      y: canvas.height - groundHeight,
+      width: 50,
+      height: 50,
+    });
+  }
+}
+
+// Draw the monkey
+function drawMonkey() {
+  ctx.fillStyle = 'brown';
+  ctx.fillRect(monkey.x, monkey.y, monkey.width, monkey.height);
+  ctx.fillStyle = 'white';
+  ctx.beginPath();
+  ctx.arc(monkey.x + monkey.width / 2, monkey.y + monkey.height / 2 - 5, 5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Draw obstacles
+function drawObstacles() {
+  ctx.fillStyle = 'gray';
+  obstacles.forEach((obstacle) => {
+    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+  });
+}
+
+// Draw the ground
+function drawGround() {
+  ctx.fillStyle = 'green';
+  ctx.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
+}
+
+// Update monkey position
+function updateMonkey() {
+  if (monkey.isJumping) {
+    monkey.y -= monkey.jumpVelocity;
+    monkey.jumpVelocity += 0.5;
+    if (monkey.y >= canvas.height - groundHeight - monkey.height) {
+      monkey.isJumping = false;
+      monkey.jumpVelocity = 0;
+      monkey.y = canvas.height - groundHeight - monkey.height;
+    }
+  } else {
+    if (keys.right && monkey.x < canvas.width - monkey.width) {
+      monkey.x += monkeySpeed;
+    }
+  }
+}
+
+// Update obstacle positions
+function updateObstacles() {
+  obstacles.forEach((obstacle, index) => {
+    obstacle.x -= obstacleSpeed;
+    if (obstacle.x < -obstacle.width) {
+      obstacles.splice(index, 1);
+    }
+  });
+}
+
+// Check for collisions
+function checkCollisions() {
+  obstacles.forEach((obstacle) => {
+    if (
+      monkey.x < obstacle.x + obstacle.width &&
+      monkey.x + monkey.width > obstacle.x &&
+      monkey.y < obstacle.y + obstacle.height &&
+      monkey.y + monkey.height > obstacle.y
+    ) {
+      gameOver = true;
+    }
+  });
+}
+
+// Handle user input
+const keys = {
+  right: false,
+  space: false,
+};
+
+document.addEventListener('keydown', (event) => {
+  switch (event.key) {
+    case 'ArrowRight':
+      keys.right = true;
+      break;
+    case ' ':
+      if (!monkey.isJumping) {
+        monkey.isJumping = true;
+        monkey.jumpVelocity = -monkey.jumpHeight;
+      }
+      break;
+  }
+});
+
+document.addEventListener('keyup', (event) => {
+  switch (event.key) {
+    case 'ArrowRight':
+      keys.right = false;
+      break;
+  }
+});
+
+// Game loop
+function gameLoop() {
+  if (!gameOver) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    updateMonkey();
+    updateObstacles();
+    checkCollisions();
+    generateObstacles();
+
+    drawGround();
+    drawMonkey();
+    drawObstacles();
+    ctx.fillStyle = 'white';
+    ctx.font = '16px Arial';
+    ctx.fillText(`Score: ${score}`, 10, 20);
+    score += 0.01; // Increase score gradually
+  } else {
+    ctx.fillStyle = 'white';
+    ctx.font = '32px Arial';
+    ctx.fillText('Game Over', canvas.width / 2 - 80, canvas.height / 2);
+  }
+  requestAnimationFrame(gameLoop);
+}
+
+// Initialize the game
+canvas.width = 400;
+canvas.height = 400;
+gameLoop();
+
+  </script>
+</body>
+</html>
